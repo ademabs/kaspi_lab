@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <title>Аккаунты</title>
+    <style>
+        .circle{
+          background-color:green;
+          display:block;
+          height:30px;
+          width:30px;
+          border-radius:50%;
+          border:2px solid #000;
+          margin:auto;
+          color:#fff;
+          line-height:50px;
+          text-align:center
+        }
+
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgb(0,0,0);
+          background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+          background-color: #fefefe;
+          margin: 15% auto;
+          padding: 20px;
+          border: 1px solid #888;
+          width: 40%;
+        }
+        h1 {
+            text-align: center;
+            font-size: 50px;
+            color: darkgreen;
+        }
+        td {
+            text-align: left;
+        }
+        .balance {
+            text-align: center;
+        }
+
+
+    </style>
+    <script>
+        function openModal() {
+          document.getElementById("myModal").style.display = "block";
+        }
+
+        function closeModal() {
+          document.getElementById("myModal").style.display = "none";
+        }
+        window.onclick = function(event) {
+            var modal = document.getElementById("myModal");
+          if (event.target == modal) {
+            modal.style.display = "none";
+          }
+        }
+
+    </script>
+</head>
+<body>
+<h1>Аккаунты</h1>
+<button id="myBtn" onclick="openModal()" class="btn btn-primary btn-lg" style="margin: 1em">Создать новый аккаунт</button>
+
+<div id="myModal" class="modal" tabindex="-1">
+  <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Создать новый аккаунт</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form name="mainForm" action="/api/accounts/" method="POST">
+            <h5>
+                Выберите валюту:
+                {% csrf_token %}
+                <select name="currency">
+                    <option selected="selected" value="KZT">KZT</option>
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                </select>
+                <br />
+            </h5>
+            <button type="submit" class="btn btn-primary" value="Submit" style="float: right">Создать</button>
+        </form>
+      </div>
+
+  </div>
+</div>
+
+
+{% for message in messages %}
+    <div class="alert alert-success">
+            {{ message }}
+    </div>
+{% endfor %}
+
+<table class="table table-hover" style="margin: 1em">
+    <tr>
+        <th>ID аккаунта</th>
+        <th style="text-align: center">История изменения баланса</th>
+        <th class="balance">Баланс</th>
+        <th class="balance">Валюта</th>
+        <th class="balance">Валютный максимум</th>
+    </tr>
+    {% for account in accounts %}
+    <tr onclick="window.location='/{{account.id_}}/transactions/'">
+        <td>{{account.id_}}</td>
+        <td style="text-align: center"><a href="/{{account.id_}}/graph/">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-graph-up" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/>
+            </svg>
+            </a>
+        </td>
+        <td class="balance"><b>{{account.balance}}</b></td>
+        <td class="balance"><b>{{account.currency}}</b></td>
+        <td>
+            {% if account.is_max == 1 %}
+            <span class="circle" ></span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+</body>
+</html>
+

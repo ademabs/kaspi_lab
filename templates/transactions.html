@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <title>Title</title>
+</head>
+    <style>
+        h1 {
+            text-align: center;
+            font-size: 50px;
+            color: darkgreen;
+        }
+        td {
+            text-align: left;
+        }
+
+        .modal {
+          display: none;
+          position: fixed;
+          z-index: 1;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          overflow: auto;
+          background-color: rgb(0,0,0);
+          background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+          background-color: #fefefe;
+          margin: 15% auto;
+          padding: 20px;
+          border: 1px solid #888;
+          width: 80%;
+          height: 40%
+        }
+    </style>
+    <script>
+        function newTransaction() {
+            document.getElementById("transactionModal").style.display = "block";
+        }
+
+        function topUp() {
+            document.getElementById("topUpModal").style.display = "block";
+        }
+
+        function closeTransaction() {
+            document.getElementById("transactionModal").style.display = "none";
+        }
+
+        function closeTopUp() {
+            document.getElementById("topUpModal").style.display = "none";
+        }
+    </script>
+<body>
+<div style="display: inline">
+    <p style="margin: 1em"><a href="/accounts/"><b>Аккаунты</b></a></p>
+    <h1>Транзакции</h1>
+</div>
+<h3 style="text-align: center">ID аккаунта: {{ account_id }}</h3>
+<h4 style="text-align: center">Баланс: <b>{{ account.balance }}</b> {{ account.currency }}</h4>
+<button id="myBtn" onclick="newTransaction()" class="btn btn-primary btn-lg" style="margin: 1em; width: 20%">Перевод</button>
+<button id="myBtn" onclick="topUp()" class="btn btn-primary btn-lg" style="margin: 1em; width: 18%"><i class="bi bi-cash-stack"></i>Пополнение</button>
+
+<div id="transactionModal" class="modal" tabindex="-1">
+  <div class="modal-content" style="height: 70%; margin: 10%">
+      <div class="modal-header">
+        <h3 class="modal-title">Сделать перевод на другой счёт</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="closeTransaction()"></button>
+      </div>
+      <div class="modal-body">
+        <form name="mainForm" action="/api/{{ account_id }}/transactions/" method="POST">
+            {% csrf_token %}
+            <h5>
+                <div class="mb-3">
+                    <label for="sender" class="form-label">ID отправителя</label>
+                    <input type="text" class="form-control" id="sender" name="sender" value="{{ account_id }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="receiver" class="form-label">ID получателя</label>
+                    <select type="text" class="form-control" id="receiver" name="receiver">
+                        <option value="" selected></option>
+                        {% for account_ in list_accounts%}
+                            {% if account_.id_ != account.id_ and account_.currency == account.currency %}
+                                <option value="{{ account_.id_ }}">{{ account_.id_ }} {{ account_.currency }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Сумма перевода</label>
+                    <input type="text" class="form-control" id="amount" name="amount">
+                </div>
+
+                <div class="mb-3">
+                    <fieldset disabled>
+                        <label for="currency" class="form-label">Валюта</label>
+                        <input type="text" class="form-control" id="currency" name="currency" value="{{ account.currency }}">
+                    </fieldset>
+                </div>
+
+                <button type="submit" class="btn btn-primary" value="Submit" style="float: right">Перевести</button>
+            </h5>
+        </form>
+      </div>
+  </div>
+</div>
+
+<div id="topUpModal" class="modal" tabindex="-1">
+  <div class="modal-content" style="height: 40%; margin: 10%">
+      <div class="modal-header">
+        <h3 class="modal-title">Пополнение счёта</h3>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closeTopUp()"></button>
+      </div>
+      <div class="modal-body">
+        <form name="append" action="/api/{{ account_id }}/transactions/" method="POST">
+            {% csrf_token %}
+            <h5>
+                <div class="mb-3">
+                    <label for="receiver" class="form-label">ID счёта</label>
+                    <input type="text" class="form-control" id="receiver" name="receiver" value="{{ account_id }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" class="form-label">Сумма пополнения</label>
+                    <input type="text" class="form-control" id="amount" name="amount">
+                </div>
+
+                <button type="submit" class="btn btn-primary" value="Submit" style="float: right">Пополнить</button>
+            </h5>
+        </form>
+      </div>
+  </div>
+</div>
+
+
+
+
+{% for message in messages %}
+    {% if message.tags == "error" %}
+        <div class="alert alert-danger">
+                {{ message }}
+        </div>
+    {% else %}
+        <div class="alert alert-success">
+                {{ message }}
+        </div>
+    {% endif %}
+{% endfor %}
+
+<table class="table table-hover" style="margin: 1em">
+    <tr>
+        <th>ID транзакции</th>
+        <th class="balance">ID отправителя</th>
+        <th class="balance">ID получателя</th>
+        <th class="balance">Сумма</th>
+    </tr>
+    {% for transaction in transactions %}
+    <tr onclick="window.location='/transactions/{{transaction.id_}}'">
+        <td>{{transaction.id_}}</td>
+        {% if transaction.sender == account.id_%}
+            <td><b>{{transaction.sender}}</b></td>
+        {% else %}
+            <td>{{transaction.sender}}</td>
+        {% endif %}
+        {% if transaction.receiver == account.id_%}
+            <td><b>{{transaction.receiver}}</b></td>
+        {% else %}
+            <td>{{transaction.receiver}}</td>
+        {% endif %}
+        <td><b>{{transaction.amount}} {{account.currency}}</b></td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
